@@ -40,7 +40,7 @@ const config: KnipConfig = {
         'astro.config.mjs'
       ],
       project: ['src/**/*.{astro,vue,ts}', '*.{js,ts,mjs}'],
-      ignoreDependencies: ['@comfyorg/design-system', '@vercel/analytics']
+      ignoreDependencies: []
     }
   },
   ignoreBinaries: ['python3', 'gh', 'generate'],
