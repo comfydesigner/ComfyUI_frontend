@@ -32,7 +32,13 @@ const config: KnipConfig = {
       entry: ['src/index.ts']
     },
     'apps/website': {
-      entry: ['src/pages/**/*.astro', 'src/styles/global.css', 'astro.config.mjs'],
+      entry: [
+        'src/pages/**/*.astro',
+        'src/layouts/**/*.astro',
+        'src/components/**/*.vue',
+        'src/styles/global.css',
+        'astro.config.mjs'
+      ],
       project: ['src/**/*.{astro,vue,ts}', '*.{js,ts,mjs}'],
       ignoreDependencies: ['@comfyorg/design-system', '@vercel/analytics']
     }
