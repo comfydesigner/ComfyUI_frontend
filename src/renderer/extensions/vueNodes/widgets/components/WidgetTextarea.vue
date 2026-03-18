@@ -33,7 +33,7 @@
       @pointerdown.capture.stop
       @pointermove.capture.stop
       @pointerup.capture.stop
-      @contextmenu.capture.stop
+      @contextmenu.capture="handleContextMenu"
     />
     <Button
       v-if="isReadOnly"
@@ -55,6 +55,7 @@ import { computed, useId } from 'vue'
 
 import Button from '@/components/ui/button/Button.vue'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
+import { isNodeOptionsOpen } from '@/composables/graph/useMoreOptionsMenu'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import type { SimplifiedWidget } from '@/types/simplifiedWidget'
@@ -92,6 +93,14 @@ const settingStore = useSettingStore()
 const spellcheck = computed(() =>
   settingStore.get('Comfy.TextareaWidget.Spellcheck')
 )
+
+function handleContextMenu(e: MouseEvent) {
+  if (isNodeOptionsOpen()) {
+    e.stopPropagation()
+    return
+  }
+  e.preventDefault()
+}
 
 function handleCopy() {
   copyToClipboard(modelValue.value)
