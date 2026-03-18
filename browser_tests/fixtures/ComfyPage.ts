@@ -25,9 +25,11 @@ import {
 import { Topbar } from './components/Topbar'
 import { CanvasHelper } from './helpers/CanvasHelper'
 import { PerformanceHelper } from './helpers/PerformanceHelper'
+import { QueueHelper } from './helpers/QueueHelper'
 import { ClipboardHelper } from './helpers/ClipboardHelper'
 import { CommandHelper } from './helpers/CommandHelper'
 import { DragDropHelper } from './helpers/DragDropHelper'
+import { FeatureFlagHelper } from './helpers/FeatureFlagHelper'
 import { KeyboardHelper } from './helpers/KeyboardHelper'
 import { NodeOperationsHelper } from './helpers/NodeOperationsHelper'
 import { SettingsHelper } from './helpers/SettingsHelper'
@@ -184,9 +186,11 @@ export class ComfyPage {
   public readonly contextMenu: ContextMenu
   public readonly toast: ToastHelper
   public readonly dragDrop: DragDropHelper
+  public readonly featureFlags: FeatureFlagHelper
   public readonly command: CommandHelper
   public readonly bottomPanel: BottomPanel
   public readonly perf: PerformanceHelper
+  public readonly queue: QueueHelper
 
   /** Worker index to test user ID */
   public readonly userIds: string[] = []
@@ -206,9 +210,7 @@ export class ComfyPage {
     this.widgetTextBox = page.getByPlaceholder('text').nth(1)
     this.resetViewButton = page.getByRole('button', { name: 'Reset View' })
     this.queueButton = page.getByRole('button', { name: 'Queue Prompt' })
-    this.runButton = page
-      .getByTestId(TestIds.topbar.queueButton)
-      .getByRole('button', { name: 'Run' })
+    this.runButton = page.getByTestId(TestIds.topbar.queueButton)
     this.workflowUploadInput = page.locator('#comfy-file-input')
 
     this.searchBox = new ComfyNodeSearchBox(page)
@@ -229,9 +231,11 @@ export class ComfyPage {
     this.contextMenu = new ContextMenu(page)
     this.toast = new ToastHelper(page)
     this.dragDrop = new DragDropHelper(page, this.assetPath.bind(this))
+    this.featureFlags = new FeatureFlagHelper(page)
     this.command = new CommandHelper(page)
     this.bottomPanel = new BottomPanel(page)
     this.perf = new PerformanceHelper(page)
+    this.queue = new QueueHelper(page)
   }
 
   get visibleToasts() {
@@ -432,7 +436,10 @@ export const comfyPageFixture = base.extend<{
         'Comfy.VueNodes.AutoScaleLayout': false,
         // Disable toast warning about version compatibility, as they may or
         // may not appear - depending on upstream ComfyUI dependencies
-        'Comfy.VersionCompatibility.DisableWarnings': true
+        'Comfy.VersionCompatibility.DisableWarnings': true,
+        // Disable errors tab to prevent missing model detection from
+        // rendering error indicators on nodes during unrelated tests.
+        'Comfy.RightSidePanel.ShowErrorsTab': false
       })
     } catch (e) {
       console.error(e)
