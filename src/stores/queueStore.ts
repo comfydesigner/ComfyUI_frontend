@@ -1,4 +1,3 @@
-import _ from 'es-toolkit/compat'
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef, toRaw, toValue } from 'vue'
 
@@ -16,6 +15,7 @@ import type {
 } from '@/schemas/apiSchema'
 import { appendCloudResParam } from '@/platform/distribution/cloudPreviewUtil'
 import { api } from '@/scripts/api'
+import { parseTaskOutput } from '@/stores/resultItemParsing'
 import type { ComfyApp } from '@/scripts/app'
 import { useExtensionService } from '@/services/extensionService'
 import { getJobDetail } from '@/services/jobOutputCache'
@@ -38,6 +38,7 @@ interface ResultItemInit extends ResultItem {
   format?: string
   frame_rate?: number
   display_name?: string
+  content?: string
 }
 
 export class ResultItemImpl {
@@ -55,6 +56,9 @@ export class ResultItemImpl {
   format?: string
   frame_rate?: number
 
+  // text specific field
+  content?: string
+
   constructor(obj: ResultItemInit) {
     this.filename = obj.filename ?? ''
     this.subfolder = obj.subfolder ?? ''
@@ -67,6 +71,7 @@ export class ResultItemImpl {
 
     this.format = obj.format
     this.frame_rate = obj.frame_rate
+    this.content = obj.content
   }
 
   get urlParams(): URLSearchParams {
@@ -94,6 +99,7 @@ export class ResultItemImpl {
   }
 
   get url(): string {
+    if (!this.filename) return ''
     return api.apiURL('/view?' + this.urlParams)
   }
 
@@ -216,9 +222,14 @@ export class ResultItemImpl {
   get is3D(): boolean {
     return getMediaTypeFromFilename(this.filename) === '3D'
   }
+  get isText(): boolean {
+    return this.mediaType === 'text'
+  }
 
   get supportsPreview(): boolean {
-    return this.isImage || this.isVideo || this.isAudio || this.is3D
+    return (
+      this.isImage || this.isVideo || this.isAudio || this.is3D || this.isText
+    )
   }
 
   static filterPreviewable(
@@ -256,10 +267,7 @@ export class TaskItemImpl {
             }
           }
         : {})
-    // Remove animated outputs from the outputs object
-    this.outputs = _.mapValues(effectiveOutputs, (nodeOutputs) =>
-      _.omit(nodeOutputs, 'animated')
-    )
+    this.outputs = effectiveOutputs
     this.flatOutputs = flatOutputs ?? this.calculateFlatOutputs()
   }
 
@@ -267,21 +275,10 @@ export class TaskItemImpl {
     if (!this.outputs) {
       return []
     }
-    return Object.entries(this.outputs).flatMap(([nodeId, nodeOutputs]) =>
-      Object.entries(nodeOutputs).flatMap(([mediaType, items]) =>
-        (items as ResultItem[]).map(
-          (item: ResultItem) =>
-            new ResultItemImpl({
-              ...item,
-              nodeId,
-              mediaType
-            })
-        )
-      )
-    )
+    return parseTaskOutput(this.outputs)
   }
 
-  /** All outputs that support preview (images, videos, audio, 3D) */
+  /** All outputs that support preview (images, videos, audio, 3D, text) */
   get previewableOutputs(): readonly ResultItemImpl[] {
     return ResultItemImpl.filterPreviewable(this.flatOutputs)
   }
