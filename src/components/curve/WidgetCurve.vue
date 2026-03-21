@@ -22,6 +22,7 @@
       :model-value="effectiveCurve.points"
       :disabled="isDisabled"
       :interpolation="effectiveCurve.interpolation"
+      :histogram="histogram"
       @update:model-value="onPointsChange"
     />
   </div>
@@ -35,6 +36,7 @@ import {
   useUpstreamValue
 } from '@/composables/useUpstreamValue'
 import type { SimplifiedWidget } from '@/types/simplifiedWidget'
+import { useNodeOutputStore } from '@/stores/nodeOutputStore'
 
 import Select from '@/components/ui/select/Select.vue'
 import SelectContent from '@/components/ui/select/SelectContent.vue'
@@ -47,8 +49,9 @@ import { isCurveData } from './curveUtils'
 import { CURVE_INTERPOLATIONS } from './types'
 import type { CurveData, CurveInterpolation, CurvePoint } from './types'
 
-const { widget } = defineProps<{
+const { widget, nodeId } = defineProps<{
   widget: SimplifiedWidget
+  nodeId: string
 }>()
 
 const modelValue = defineModel<CurveData>({
@@ -62,6 +65,14 @@ const modelValue = defineModel<CurveData>({
 })
 
 const isDisabled = computed(() => !!widget.options?.disabled)
+
+const nodeOutputStore = useNodeOutputStore()
+const histogram = computed(() => {
+  const output = nodeOutputStore.nodeOutputs[nodeId]
+  const data = output?.histogram
+  if (!Array.isArray(data) || data.length === 0) return null
+  return new Uint32Array(data)
+})
 
 const upstreamValue = useUpstreamValue(
   () => widget.linkedUpstream,
