@@ -16,6 +16,7 @@
       :collision-padding="8"
       update-position-strategy="always"
       class="max-h-[80vh] overflow-y-auto md:max-h-none md:overflow-y-visible"
+      @focus-outside="onFocusOutside"
     >
       <NodeContextMenuItem
         v-for="(option, idx) in menuOptions"
@@ -47,10 +48,13 @@ import { useCanvasStore } from '@/renderer/core/canvas/canvasStore'
 
 import NodeContextMenuItem from './NodeContextMenuItem.vue'
 
+const OPEN_FOCUS_GRACE_MS = 300
+
 const isOpen = ref(false)
 const worldPosition = ref({ x: 0, y: 0 })
 const screenAnchor = ref({ x: 0, y: 0 })
 const anchorElement = ref<HTMLElement | null>(null)
+let openedAt = 0
 
 const { menuOptions, bump } = useMoreOptionsMenu()
 const canvasStore = useCanvasStore()
@@ -101,7 +105,18 @@ function show(event: MouseEvent) {
       event.currentTarget instanceof HTMLElement ? event.currentTarget : null
   }
   syncScreenAnchor()
+  openedAt = performance.now()
   isOpen.value = true
+}
+
+// A right-click on a widget input focuses it immediately after the menu
+// opens, which reka treats as a focus-out and auto-dismisses. Suppress
+// only that opening-time focus steal; later focus-outs (clicking the
+// canvas, another node) still dismiss normally.
+function onFocusOutside(event: Event) {
+  if (performance.now() - openedAt < OPEN_FOCUS_GRACE_MS) {
+    event.preventDefault()
+  }
 }
 
 function hide() {

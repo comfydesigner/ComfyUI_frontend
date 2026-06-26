@@ -92,6 +92,23 @@ describe('contextMenuConverter', () => {
       expect(dividers.length).toBeGreaterThan(0)
     })
 
+    it('does not double-wrap an already-structured Extensions submenu', () => {
+      const firstPass = buildStructuredMenu([
+        { label: 'Copy', source: 'vue' },
+        { label: 'Custom Extension', source: 'litegraph' }
+      ])
+
+      const secondPass = buildStructuredMenu(firstPass)
+
+      const extensionsEntries = secondPass.filter(
+        (opt) => opt.label === 'Extensions'
+      )
+      expect(extensionsEntries).toHaveLength(1)
+      expect(extensionsEntries[0].subOptions?.map((o) => o.label)).toEqual([
+        'Custom Extension'
+      ])
+    })
+
     it('should handle empty input', () => {
       const result = buildStructuredMenu([])
       expect(result).toEqual([])
