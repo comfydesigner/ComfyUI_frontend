@@ -72,6 +72,7 @@
               )
             "
             @update:model-value="widget.updateHandler"
+            @mousedown.right.prevent
             @contextmenu="widget.handleContextMenu"
           />
         </AppInput>
