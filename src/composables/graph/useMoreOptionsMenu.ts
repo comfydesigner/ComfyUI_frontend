@@ -33,6 +33,10 @@ export interface MenuOption {
   source?: 'litegraph' | 'vue'
   isColorPicker?: boolean
   isShapePicker?: boolean
+  // Nested MenuOption submenu (preserves full fidelity — shortcuts, icons,
+  // further nesting). Distinct from `submenu`, which is the leaf-only shape
+  // used by color/shape pickers.
+  subOptions?: MenuOption[]
 }
 
 export interface SubMenuOption {

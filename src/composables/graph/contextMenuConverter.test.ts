@@ -10,7 +10,7 @@ import {
 
 describe('contextMenuConverter', () => {
   describe('buildStructuredMenu', () => {
-    it('should order core items before extension items', () => {
+    it('should keep core items at top level and group extension items into a submenu', () => {
       const options: MenuOption[] = [
         { label: 'Custom Extension Item', source: 'litegraph' },
         { label: 'Copy', source: 'vue' },
@@ -19,18 +19,23 @@ describe('contextMenuConverter', () => {
 
       const result = buildStructuredMenu(options)
 
-      // Core items (Rename, Copy) should come before extension items
       const renameIndex = result.findIndex((opt) => opt.label === 'Rename')
       const copyIndex = result.findIndex((opt) => opt.label === 'Copy')
-      const extensionIndex = result.findIndex(
-        (opt) => opt.label === 'Custom Extension Item'
+      const extensionsEntry = result.find(
+        (opt) => opt.label === 'Extensions' && opt.hasSubmenu
+      )
+      const extensionsIndex = result.findIndex(
+        (opt) => opt.label === 'Extensions' && opt.hasSubmenu
       )
 
-      expect(renameIndex).toBeLessThan(extensionIndex)
-      expect(copyIndex).toBeLessThan(extensionIndex)
+      expect(renameIndex).toBeLessThan(extensionsIndex)
+      expect(copyIndex).toBeLessThan(extensionsIndex)
+      expect(extensionsEntry?.subOptions?.map((o) => o.label)).toEqual([
+        'Custom Extension Item'
+      ])
     })
 
-    it('should add Extensions category label before extension items', () => {
+    it('should expose extensions as a single submenu entry', () => {
       const options: MenuOption[] = [
         { label: 'Copy', source: 'vue' },
         { label: 'My Custom Extension', source: 'litegraph' }
@@ -38,11 +43,12 @@ describe('contextMenuConverter', () => {
 
       const result = buildStructuredMenu(options)
 
-      const extensionsLabel = result.find(
-        (opt) => opt.label === 'Extensions' && opt.type === 'category'
+      const extensionsEntry = result.find(
+        (opt) => opt.label === 'Extensions' && opt.hasSubmenu
       )
-      expect(extensionsLabel).toBeDefined()
-      expect(extensionsLabel?.disabled).toBe(true)
+      expect(extensionsEntry).toBeDefined()
+      expect(extensionsEntry?.subOptions).toHaveLength(1)
+      expect(extensionsEntry?.subOptions?.[0].label).toBe('My Custom Extension')
     })
 
     it('should place Delete at the very end', () => {
@@ -191,16 +197,14 @@ describe('contextMenuConverter', () => {
 
       const result = buildStructuredMenu(options)
 
-      // Frame Nodes should appear in the core items section (before Extensions)
       const frameNodesIndex = result.findIndex(
         (opt) => opt.label === 'Frame Nodes'
       )
-      const extensionsCategoryIndex = result.findIndex(
-        (opt) => opt.label === 'Extensions' && opt.type === 'category'
+      const extensionsIndex = result.findIndex(
+        (opt) => opt.label === 'Extensions' && opt.hasSubmenu
       )
 
-      // Frame Nodes should come before Extensions category
-      expect(frameNodesIndex).toBeLessThan(extensionsCategoryIndex)
+      expect(frameNodesIndex).toBeLessThan(extensionsIndex)
     })
   })
 
@@ -354,11 +358,10 @@ describe('contextMenuConverter', () => {
       ]
       const result = convertContextMenuToOptions(items)
 
-      // With structuring, there should be Extensions category
-      const hasExtensionsCategory = result.some(
-        (opt) => opt.label === 'Extensions' && opt.type === 'category'
+      const hasExtensionsSubmenu = result.some(
+        (opt) => opt.label === 'Extensions' && opt.hasSubmenu
       )
-      expect(hasExtensionsCategory).toBe(true)
+      expect(hasExtensionsSubmenu).toBe(true)
     })
   })
 })

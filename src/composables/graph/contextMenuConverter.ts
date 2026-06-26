@@ -346,20 +346,16 @@ export function buildStructuredMenu(options: MenuOption[]): MenuOption[] {
   // Add ordered core items with their dividers
   result.push(...orderedCoreItems)
 
-  // Add extensions section if there are extension items
+  // Add extensions section as a nested submenu so the main menu stays
+  // compact and consistent with other submenu entries.
   if (extensionItems.length > 0) {
-    // Add divider before Extensions section
     result.push({ type: 'divider' })
-
-    // Add non-clickable Extensions label
     result.push({
       label: 'Extensions',
-      type: 'category',
-      disabled: true
+      icon: 'icon-[lucide--puzzle]',
+      hasSubmenu: true,
+      subOptions: extensionItems
     })
-
-    // Add extension items
-    result.push(...extensionItems)
   }
 
   // Add Delete at the bottom if it exists
