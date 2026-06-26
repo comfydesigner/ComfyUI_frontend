@@ -272,8 +272,15 @@ function getMenuItemOrder(label: string): number {
  * Ensures Delete always appears at the bottom
  */
 export function buildStructuredMenu(options: MenuOption[]): MenuOption[] {
+  // Unwrap any already-built Extensions submenus so re-structuring an
+  // already-structured menu doesn't double-nest them.
+  const unwrapped = options.flatMap((opt) =>
+    opt.label === 'Extensions' && opt.hasSubmenu && opt.subOptions
+      ? opt.subOptions
+      : [opt]
+  )
   // First, remove duplicates (giving precedence to Vue hardcoded options)
-  const deduplicated = removeDuplicateMenuOptions(options)
+  const deduplicated = removeDuplicateMenuOptions(unwrapped)
   const coreItemsMap = new Map<string, MenuOption>()
   const extensionItems: MenuOption[] = []
   let deleteItem: MenuOption | undefined
@@ -346,20 +353,16 @@ export function buildStructuredMenu(options: MenuOption[]): MenuOption[] {
   // Add ordered core items with their dividers
   result.push(...orderedCoreItems)
 
-  // Add extensions section if there are extension items
+  // Add extensions section as a nested submenu so the main menu stays
+  // compact and consistent with other submenu entries.
   if (extensionItems.length > 0) {
-    // Add divider before Extensions section
     result.push({ type: 'divider' })
-
-    // Add non-clickable Extensions label
     result.push({
       label: 'Extensions',
-      type: 'category',
-      disabled: true
+      icon: 'icon-[lucide--blocks]',
+      hasSubmenu: true,
+      subOptions: extensionItems
     })
-
-    // Add extension items
-    result.push(...extensionItems)
   }
 
   // Add Delete at the bottom if it exists
