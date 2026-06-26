@@ -136,6 +136,7 @@ import { useCanvasStore } from '@/renderer/core/canvas/canvasStore'
 const isOpen = ref(false)
 const worldPosition = ref({ x: 0, y: 0 })
 const screenAnchor = ref({ x: 0, y: 0 })
+const anchorElement = ref<HTMLElement | null>(null)
 
 const { menuOptions, bump } = useMoreOptionsMenu()
 const canvasStore = useCanvasStore()
@@ -145,6 +146,11 @@ const lgCanvas = canvasStore.getCanvas()
 const { left: canvasLeft, top: canvasTop } = useElementBounding(lgCanvas.canvas)
 
 function syncScreenAnchor() {
+  if (anchorElement.value) {
+    const rect = anchorElement.value.getBoundingClientRect()
+    screenAnchor.value = { x: rect.left, y: rect.bottom }
+    return
+  }
   const { scale, offset } = lgCanvas.ds
   screenAnchor.value = {
     x: (worldPosition.value.x + offset[0]) * scale + canvasLeft.value,
@@ -168,12 +174,18 @@ const anchorStyle = computed(() => ({
 
 function show(event: MouseEvent) {
   bump()
-  const screenX = event.clientX - canvasLeft.value
-  const screenY = event.clientY - canvasTop.value
-  const { scale, offset } = lgCanvas.ds
-  worldPosition.value = {
-    x: screenX / scale - offset[0],
-    y: screenY / scale - offset[1]
+  if (event.type === 'contextmenu') {
+    anchorElement.value = null
+    const screenX = event.clientX - canvasLeft.value
+    const screenY = event.clientY - canvasTop.value
+    const { scale, offset } = lgCanvas.ds
+    worldPosition.value = {
+      x: screenX / scale - offset[0],
+      y: screenY / scale - offset[1]
+    }
+  } else {
+    anchorElement.value =
+      event.currentTarget instanceof HTMLElement ? event.currentTarget : null
   }
   syncScreenAnchor()
   isOpen.value = true
